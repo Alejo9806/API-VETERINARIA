@@ -1,8 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import conectarDB from './config/db.js';
-// import routes  from './routes/index.js';
-import bodyParser  from 'body-parser';
+import veterinarioRoutes from './routes/veterinarioRoutes.js';
+
 import cors  from 'cors';
 
 //crear el servidor
@@ -17,12 +17,12 @@ conectarDB();
 app.use(cors());
 
 
-//Habilitar el bodyParser
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+//Habilitar el req.body
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
-// //Habilitar routing
-// app.use('/',routes());
+//Habilitar routing
+app.use('/api/veterinarios',veterinarioRoutes);
 
 
 // puerto y arrancar el servidor
