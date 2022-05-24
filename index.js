@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import conectarDB from './config/db.js';
 import veterinarioRoutes from './routes/veterinarioRoutes.js';
+import pacienteRoutes from './routes/pacientesRouter.js';
 
 import cors  from 'cors';
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({extended: true}));
 
 //Habilitar routing
 app.use('/api/veterinarios',veterinarioRoutes);
+app.use('/api/pacientes',pacienteRoutes)
 
 
 // puerto y arrancar el servidor

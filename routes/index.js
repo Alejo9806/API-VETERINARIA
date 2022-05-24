@@ -1,7 +1,4 @@
-import express  from 'express';
-import pacienteController from '../controllers/pacienteControllers.js';
 
-const router = express.Router();
 
 module.exports = function () {
 
