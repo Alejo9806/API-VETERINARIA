@@ -8,7 +8,7 @@ const nuevoPaciente = async  (req,res,next) =>{
     paciente.veterinario = req.veterinario._id;
     try {
         await paciente.save();
-        res.json({mensaje:'El paciente se agrego correctamente'});
+        res.json(paciente);
     } catch (error) {
         console.log(error);
         next();

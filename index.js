@@ -15,7 +15,17 @@ const PORT = process.env.PORT || 4000;
 conectarDB();
 
 //Habilitar cors
-app.use(cors());
+const dominiosPermitidos = [process.env.FRONT_URL];
+const corsOption = {
+    origin: function(origin, callback){
+        if(dominiosPermitidos.indexOf(origin) !== -1){
+            callback(null, true);
+        }else{
+            callback(new Error('No permitido por CORS'));
+        }
+    }
+}
+app.use(cors(corsOption));
 
 
 //Habilitar el req.body

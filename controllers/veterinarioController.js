@@ -1,11 +1,13 @@
 import Veterinario from "../models/Veterinario.js";
 import generarJWT from "../helpers/generarJWT.js";
 import generarId from "../helpers/generarId.js";
+import emailRegistro from "../helpers/emailRegistro.js";
+import emailOlvidePassword from "../helpers/emailOvidePassword.js";
 
 const registrar = async (req,res)  => {
     console.log(req.body);
     try {
-        const {email} = req.body;
+        const {email,nombre} = req.body;
 
         //Revisar si un usario esta duplicado
         const existeUsario = await Veterinario.findOne({email});
@@ -18,6 +20,9 @@ const registrar = async (req,res)  => {
         //Guardar un nuevo veterinario
         const veterinario = new Veterinario(req.body);
         const veterinarioGuardado = await veterinario.save();
+
+        //Enviar un email de confirmacion
+        emailRegistro({email,nombre,token:veterinarioGuardado.token});
         res.json(veterinarioGuardado);
     } catch (error) {
         console.log(error);
@@ -26,7 +31,7 @@ const registrar = async (req,res)  => {
 
 const perfil =  (req,res) => {
     const {veterinario} = req;
-    res.json({perfil:veterinario});
+    res.json(veterinario);
 };
 
 const confirmar = async (req,res) => {
@@ -61,7 +66,8 @@ const autenticar = async (req,res) =>{
     //Revisar el password
     if (await usuario.comprobarPassword(password)) {
         //Autenticar al usuario
-        res.json({token:generarJWT(usuario._id)})
+        usuario.token = generarJWT(usuario._id)
+        res.json({_id:usuario._id,token:usuario.token,nombre:usuario.nombre,email:usuario.email});
     }else{
         const error = new Error('El password es incorrecto');
         return res.status(403).json({msg:error.message})
@@ -87,6 +93,8 @@ const olvidePassword = async (req,res) =>{
     try {
         existeVeterinario.token = generarId();
         await existeVeterinario.save();
+        //Enviar un email de restablecer
+        emailOlvidePassword({email,nombre:existeVeterinario.nombre,token:existeVeterinario.token});
         res.json({msg:"Hemos enviado un email con las instrucciones"});
     } catch (error) {
         console.log(error);
@@ -123,4 +131,60 @@ const nuevoPassword = async (req,res) =>{
         console.log(error);
     }
 }
-export {registrar,autenticar,confirmar,perfil,olvidePassword,comprobarToken,nuevoPassword};
+
+const actualizarPerfil = async (req,res) =>{
+    const veterinario = await Veterinario.findById(req.params.id);
+    if (!veterinario) {
+        const error = new Error('Usuario no encontrado');
+        return res.status(404).json({msg:error.message});
+    }
+    const {email} = req.body;
+    if (email !== veterinario.email) {
+        const existeVeterinario = await Veterinario.findOne({email});
+        if (existeVeterinario) {
+            const error = new Error('El email ya esta registrado');
+            return res.status(400).json({msg:error.message});
+        }
+    }
+
+    try {
+        const {nombre,email,telefono,web} = req.body;
+        veterinario.nombre = nombre;
+        veterinario.email = email;
+        veterinario.telefono = telefono;
+        veterinario.web = web;
+        const veterinarioActualizado =  await veterinario.save();
+        res.json(veterinarioActualizado);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const actualizarPassword = async (req,res) =>{
+    const {password,passwordNuevo} = req.body;
+    const {_id} = req.veterinario;
+    //Comprobar si el usuario existe
+
+    const veterinario = await Veterinario.findById(_id);
+    if (!veterinario) {
+        const error = new Error('Usuario no encontrado');
+        return res.status(404).json({msg:error.message});
+    }
+
+    //Comprobar el password
+    if (await veterinario.comprobarPassword(password)) {
+        //Almacenar el nuevo password
+        veterinario.password = passwordNuevo;
+        await veterinario.save();
+        res.json({msg:'Password actualizado correctamente'});
+    }else{
+        const error = new Error('El password actual es incorrecto');
+        return res.status(400).json({msg:error.message});
+    }
+
+    
+}
+
+
+
+export {registrar,autenticar,confirmar,perfil,olvidePassword,comprobarToken,nuevoPassword,actualizarPerfil,actualizarPassword};
